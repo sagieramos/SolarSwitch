@@ -2,6 +2,10 @@
 #define MAIN_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
+
+#define MAX_VOLTAGE_ADDRESS 0
+#define SOLAR_INDEX_MAX_VALUE 1000
 
 class SolarIndexMonitor {
 private:
@@ -23,5 +27,7 @@ public:
                                unsigned long &durationBelowMin);
   void debugRecordedData();
 };
+
+double readSolarIndex(const uint8_t pin);
 
 #endif
