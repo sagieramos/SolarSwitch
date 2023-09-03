@@ -9,39 +9,37 @@ SolarIndexMonitor::SolarIndexMonitor()
 }
 
 void SolarIndexMonitor::setThresholds(double max, double min) {
-  maxThreshold = max;
-  minThreshold = min;
+  if (max >= min && (max != maxThreshold || min != minThreshold)) {
+    maxThreshold = max;
+    minThreshold = min;
+  }
 }
 
 void SolarIndexMonitor::updateSolarIndex(double newValue) {
-  currentSolarIndex = newValue;
+  if (newValue < 0)
+    return;
+
   unsigned long currentMillis = millis();
+  bool isAboveMax = (newValue > maxThreshold);
+  bool isBelowMin = (newValue < minThreshold);
 
-  if (currentSolarIndex > maxThreshold) {
-    if (startMillisAboveMax == 0) {
-      startMillisAboveMax = currentMillis;
-      maxThresholdDuringExceed = maxThreshold;
-    }
-  } else {
-    if (startMillisAboveMax != 0) {
-      unsigned long duration = currentMillis - startMillisAboveMax;
-      accumulatedDurationAboveMax += duration;
-      startMillisAboveMax = 0;
-    }
+  if (isAboveMax && startMillisAboveMax == 0) {
+    startMillisAboveMax = currentMillis;
+    maxThresholdDuringExceed = maxThreshold;
+  } else if (!isAboveMax && startMillisAboveMax != 0) {
+    accumulatedDurationAboveMax += (currentMillis - startMillisAboveMax);
+    startMillisAboveMax = 0;
   }
 
-  if (currentSolarIndex < minThreshold) {
-    if (startMillisBelowMin == 0) {
-      startMillisBelowMin = currentMillis;
-      minThresholdDuringFall = minThreshold;
-    }
-  } else {
-    if (startMillisBelowMin != 0) {
-      unsigned long duration = currentMillis - startMillisBelowMin;
-      accumulatedDurationBelowMin += duration;
-      startMillisBelowMin = 0;
-    }
+  if (isBelowMin && startMillisBelowMin == 0) {
+    startMillisBelowMin = currentMillis;
+    minThresholdDuringFall = minThreshold;
+  } else if (!isBelowMin && startMillisBelowMin != 0) {
+    accumulatedDurationBelowMin += (currentMillis - startMillisBelowMin);
+    startMillisBelowMin = 0;
   }
+
+  currentSolarIndex = newValue;
 }
 
 void SolarIndexMonitor::getAccumulatedDurations(

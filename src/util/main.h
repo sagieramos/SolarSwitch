@@ -28,6 +28,22 @@ public:
   void debugRecordedData();
 };
 
+class SwitchController {
+private:
+  u_int8_t _solarSensorPin;
+  u_int8_t _relaySignalPin;
+  unsigned long previousMinutes;
+  unsigned long interval;
+  SolarIndexMonitor indexMonitor;
+
+public:
+  SwitchController(u_int8_t solarSensorPin, u_int8_t relaySignalPin);
+  void setInterval(unsigned int duration);
+  void setSolarThresholds(double max, double min);
+  void run();
+  void debug();
+};
+
 double readSolarIndex(const uint8_t pin);
 
 #endif
