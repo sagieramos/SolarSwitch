@@ -25,6 +25,7 @@ void SwitchController::run() {
 
   if (currentMinutes - previousMinutes >= interval) {
     unsigned long durationAboveMax, durationBelowMin;
+    
     indexMonitor.getAccumulatedDurations(durationAboveMax, durationBelowMin);
 
     int relaySignal = analogRead(_relaySignalPin);
@@ -32,9 +33,8 @@ void SwitchController::run() {
         (durationAboveMax > durationBelowMin && relaySignal == LOW) ||
         (durationAboveMax <= durationBelowMin && relaySignal == HIGH);
 
-    if (shouldToggleRelay) {
+    if (shouldToggleRelay) 
       digitalWrite(_relaySignalPin, !relaySignal);
-    }
 
     previousMinutes = currentMinutes;
   }
