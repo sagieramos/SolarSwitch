@@ -32,9 +32,8 @@ void SwitchController::run() {
         (durationAboveMax > durationBelowMin && relaySignal == LOW) ||
         (durationAboveMax <= durationBelowMin && relaySignal == HIGH);
 
-    if (shouldToggleRelay) {
+    if (shouldToggleRelay)
       digitalWrite(_relaySignalPin, !relaySignal);
-    }
 
     previousMinutes = currentMinutes;
   }
