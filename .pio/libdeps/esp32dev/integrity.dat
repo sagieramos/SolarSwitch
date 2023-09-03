@@ -1,8 +1,10 @@
-mysensors/MySensors@^2.3.2
-ayushsharma82/EasyDDNS @ ^1.8.0
 https://github.com/me-no-dev/ESPAsyncTCP.git
-https://github.com/bblanchon/ArduinoJson.git
+ayushsharma82/EasyDDNS @ ^1.8.0
+TimeAlarms
+Wifi
 https://github.com/me-no-dev/ESPAsyncWebServer.git
 SPIFFS
-Wifi
+Time
+mysensors/MySensors@^2.3.2
 FS
+https://github.com/bblanchon/ArduinoJson.git
