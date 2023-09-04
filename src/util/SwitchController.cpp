@@ -24,7 +24,7 @@ bool SwitchController::setInterval(unsigned short durationInMinutes) {
   if (durationInMinutes < 1 || durationInMinutes > 60)
     return false;
 
-  intervalMillis = durationInMinutes * 60 * 1000;
+  intervalMillis = durationInMinutes * MINUTES_TO_MILLIS;
 
   return true;
 }
