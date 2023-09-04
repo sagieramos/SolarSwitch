@@ -8,6 +8,23 @@
 #define SOLAR_THRESHOLDS_ADDRESS 8
 #define SOLAR_INDEX_MAX_VALUE 1000.0
 
+struct SolarThresholds {
+  double max;
+  double min;
+
+  SolarThresholds(double max_value = SOLAR_INDEX_MAX_VALUE,
+                  double min_value = 0.0)
+      : max(max_value), min(min_value) {}
+
+  bool operator==(const SolarThresholds &other) const {
+    return (max == other.max) && (min == other.min);
+  }
+
+  bool operator!=(const SolarThresholds &other) const {
+    return !(*this == other);
+  }
+};
+
 class SolarIndexMonitor {
 private:
   SolarThresholds _threshold;
@@ -33,6 +50,8 @@ private:
   SolarThresholds threshold;
   u_int8_t _solarSensorPin;
   u_int8_t _relaySignalPin;
+  static unsigned short thresholdsEepromAddress;
+  const unsigned short thresholdEepromInstanceAddress;
   unsigned long previousMillis = 0;
   unsigned long intervalMinutes = 5;
   unsigned long intervalMillis = 0;
@@ -45,24 +64,8 @@ public:
   bool setSolarThresholds(double max, double min);
   bool setSolarThresholds(double min);
   void run();
+  static unsigned short getInstanceCount();
   void debug();
-};
-
-struct SolarThresholds {
-  double max;
-  double min;
-
-  SolarThresholds(double max_value = SOLAR_INDEX_MAX_VALUE,
-                  double min_value = 0.0)
-      : max(max_value), min(min_value) {}
-
-  bool operator==(const SolarThresholds &other) const {
-    return (max == other.max) && (min == other.min);
-  }
-
-  bool operator!=(const SolarThresholds &other) const {
-    return !(*this == other);
-  }
 };
 
 double readSolarIndex(const uint8_t pin);

@@ -1,17 +1,21 @@
 #include "main.h"
 
+#define MINUTES_TO_MILLIS 60000
+
 SwitchController::SwitchController(u_int8_t solarSensorPin,
                                    u_int8_t relaySignalPin)
     : _solarSensorPin(solarSensorPin), _relaySignalPin(relaySignalPin),
-      intervalMillis(intervalMinutes * 60 * 1000) {
-  EEPROM.get(SOLAR_THRESHOLDS_ADDRESS, threshold);
+      thresholdEepromInstanceAddress(thresholdsEepromAddress +=
+                                     sizeof(SolarThresholds)),
+      intervalMillis(intervalMinutes * MINUTES_TO_MILLIS) {
+  EEPROM.get(thresholdEepromInstanceAddress, threshold);
 
   if (isnan(threshold.max) && isnan(threshold.min)) {
     indexMonitor.setThresholds(threshold);
   } else {
     SolarThresholds newThreshold;
 
-    EEPROM.put(SOLAR_THRESHOLDS_ADDRESS, newThreshold);
+    EEPROM.put(thresholdEepromInstanceAddress, newThreshold);
     EEPROM.commit();
   }
 }
@@ -29,7 +33,7 @@ bool SwitchController::setSolarThresholds(SolarThresholds newThreshold) {
   if (newThreshold.max >= newThreshold.min && newThreshold != threshold) {
     threshold = newThreshold;
 
-    EEPROM.put(SOLAR_THRESHOLDS_ADDRESS, threshold);
+    EEPROM.put(thresholdEepromInstanceAddress, threshold);
     EEPROM.commit();
     indexMonitor.setThresholds(threshold);
     return true;
@@ -46,7 +50,7 @@ bool SwitchController::setSolarThresholds(double max, double min) {
 
   if (threshold != newValue) {
     threshold = newValue;
-    EEPROM.put(SOLAR_THRESHOLDS_ADDRESS, threshold);
+    EEPROM.put(thresholdEepromInstanceAddress, threshold);
     EEPROM.commit();
     indexMonitor.setThresholds(threshold);
   }
@@ -62,7 +66,7 @@ bool SwitchController::setSolarThresholds(double min) {
 
   if (threshold != newValue) {
     threshold = newValue;
-    EEPROM.put(SOLAR_THRESHOLDS_ADDRESS, threshold);
+    EEPROM.put(thresholdEepromInstanceAddress, threshold);
     EEPROM.commit();
     indexMonitor.setThresholds(threshold);
   }
@@ -91,6 +95,10 @@ void SwitchController::run() {
     previousMillis = currentMillis;
     indexMonitor.resetTimmer();
   }
+}
+
+unsigned short SwitchController::getInstanceCount() {
+  return (thresholdsEepromAddress / sizeof(SolarThresholds));
 }
 
 void SwitchController::debug() { indexMonitor.debugRecordedData(); }
