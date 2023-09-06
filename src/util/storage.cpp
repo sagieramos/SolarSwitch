@@ -91,25 +91,26 @@ bool storeDouble(const char *key, double value) {
 
 // Function to store the struct in NVS
 bool storeSolarThresholds(const char *key, const SolarThresholds &value) {
-    if (open_nvs_namespace("storage") != ESP_OK)
-        return false;
+  if (open_nvs_namespace("storage") != ESP_OK)
+    return false;
 
-    // Serialize the struct to a byte array
-    uint8_t serializedData[sizeof(SolarThresholds)];
-    memcpy(serializedData, &value, sizeof(SolarThresholds));
+  // Serialize the struct to a byte array
+  uint8_t serializedData[sizeof(SolarThresholds)];
+  memcpy(serializedData, &value, sizeof(SolarThresholds));
 
-    if (nvs_set_blob(SwNamespace, key, serializedData, sizeof(SolarThresholds)) != ESP_OK) {
-        close_nvs_namespace();
-        return false;
-    }
-
-    if (nvs_commit(SwNamespace) != ESP_OK) {
-        close_nvs_namespace();
-        return false;
-    }
-
+  if (nvs_set_blob(SwNamespace, key, serializedData, sizeof(SolarThresholds)) !=
+      ESP_OK) {
     close_nvs_namespace();
-    return true;
+    return false;
+  }
+
+  if (nvs_commit(SwNamespace) != ESP_OK) {
+    close_nvs_namespace();
+    return false;
+  }
+
+  close_nvs_namespace();
+  return true;
 }
 
 // Retrieve a string value from NVS
@@ -159,20 +160,19 @@ bool retrieveIntValue(const char *key, int32_t *value) {
 
 // Retrieve the olarThresholds from NVS
 bool retrieveSolarThresholds(const char *key, SolarThresholds &value) {
-    if (open_nvs_namespace("storage") != ESP_OK)
-        return false;
+  if (open_nvs_namespace("storage") != ESP_OK)
+    return false;
 
-    size_t data_size = sizeof(SolarThresholds);
-    uint8_t serializedData[data_size];
+  size_t data_size = sizeof(SolarThresholds);
+  uint8_t serializedData[data_size];
 
-    if (nvs_get_blob(SwNamespace, key, serializedData, &data_size) == ESP_OK) {
-        // Deserialize the byte array back to the struct
-        memcpy(&value, serializedData, sizeof(SolarThresholds));
-        close_nvs_namespace();
-        return true;
-    } else {
-        close_nvs_namespace();
-        return false;
-    }
+  if (nvs_get_blob(SwNamespace, key, serializedData, &data_size) == ESP_OK) {
+    // Deserialize the byte array back to the struct
+    memcpy(&value, serializedData, sizeof(SolarThresholds));
+    close_nvs_namespace();
+    return true;
+  } else {
+    close_nvs_namespace();
+    return false;
+  }
 }
-

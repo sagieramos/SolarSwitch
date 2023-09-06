@@ -1,33 +1,33 @@
 #include "main.h"
 
-#define R1 30000.0
-#define R2 7500.0
+SolarIndex::SolarIndex(const char *key, adc1_channel_t pin, double r1,
+                       double r2)
+    : _key(key), _pin(pin), R1(r1), R2(r2) {
+  adc1_config_width(ADC_WIDTH_BIT_12);
+  adc1_config_channel_atten((adc1_channel_t)pin, ADC_ATTEN_DB_11);
+  retrieveHighestVoltFromNVS();
+}
 
-double readVoltageFromSensor(const uint8_t pin) {
-  double adc_value = analogRead(pin);
-  double adc_voltage = (adc_value * 3.3) / 4095.0;
+double SolarIndex::readVoltage() {
+  uint32_t adc_reading = adc1_get_raw(_pin);
+  double adc_voltage = (adc_reading * 3.3) / 4095.0;
   double in_voltage = adc_voltage / (R2 / (R1 + R2));
   return in_voltage;
 }
 
-double getMaxVoltageRecordedInEEPROM(double volt) {
-  if (isnan(volt))
-    return -1;
-
-  double max_volt;
-  EEPROM.get(MAX_VOLTAGE_ADDRESS, max_volt);
-
-  if (isnan(max_volt) || volt > max_volt) {
-    max_volt = volt;
-    EEPROM.put(MAX_VOLTAGE_ADDRESS, max_volt);
-    EEPROM.commit();
-  }
-
-  return max_volt;
+void SolarIndex::retrieveHighestVoltFromNVS() {
+  double volt;
+  if (retrieveDouble(_key, &volt))
+    highestVolt = volt;
+  else
+    highestVolt = -1; // negative value indicate failure
 }
 
-double readSolarIndex(const uint8_t pin) {
-  double voltage = readVoltageFromSensor(pin);
-  double max_volt = getMaxVoltageRecordedInEEPROM(voltage);
-  return SOLAR_INDEX_MAX_VALUE * (voltage / max_volt);
+double SolarIndex::read() {
+  double volt = readVoltage();
+  if (volt > highestVolt) {
+    if (storeDouble(_key, volt))
+      highestVolt = volt;
+  }
+  return SOLAR_INDEX_MAX_VALUE * (volt / highestVolt);
 }

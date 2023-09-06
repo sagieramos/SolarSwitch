@@ -1,14 +1,16 @@
 #ifndef MAIN_H
 #define MAIN_H
+#include "driver/adc.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include <stdio.h>
 #include <string.h>
 
 #define MAX_VOLTAGE_ADDRESS 0
 #define SOLAR_THRESHOLDS_ADDRESS 8
 #define SOLAR_INDEX_MAX_VALUE 1000.0
-#define SWNAMESPACE "SwStorage"
+#define PIN_HIGH_THRESHOLD 2000
 
 struct SolarThresholds {
   double max;
@@ -25,6 +27,23 @@ struct SolarThresholds {
   bool operator!=(const SolarThresholds &other) const {
     return !(*this == other);
   }
+};
+
+class SolarIndex {
+private:
+  const adc1_channel_t _pin;
+  const char *_key;
+  double R1;
+  double R2;
+  double highestVolt;
+
+  double readVoltage();
+  void retrieveHighestVoltFromNVS();
+
+public:
+  SolarIndex(const char *key, adc1_channel_t pin, double r1 = 30000.0,
+             double r2 = 7500.0);
+  double read();
 };
 
 class SolarIndexMonitor {
@@ -50,27 +69,23 @@ public:
 class SwitchController {
 private:
   SolarThresholds threshold;
-  u_int8_t _solarSensorPin;
-  u_int8_t _relaySignalPin;
-  static unsigned short thresholdsEepromAddress;
-  const unsigned short thresholdEepromInstanceAddress;
+  gpio_num_t _relaySignalPin;
+  const char *swThresholdAdrress;
   unsigned long previousMillis = 0;
   unsigned long intervalMinutes = 5;
   unsigned long intervalMillis = 0;
   SolarIndexMonitor indexMonitor;
 
 public:
-  SwitchController(u_int8_t solarSensorPin, u_int8_t relaySignalPin);
+  SwitchController(gpio_num_t relaySignalPin);
   bool setInterval(unsigned short duration);
   bool setSolarThresholds(SolarThresholds threshold);
   bool setSolarThresholds(double max, double min);
   bool setSolarThresholds(double min);
   void run();
-  static unsigned short getInstanceCount();
   void debug();
 };
 
-double readSolarIndex(const uint8_t pin);
 int64_t millis();
 
 esp_err_t init_nvs();
@@ -82,5 +97,9 @@ bool retrieveDouble(const char *key, double *value);
 bool retrieveIntValue(const char *key, int32_t *value);
 bool storeSolarThresholds(const char *key, const SolarThresholds &value);
 bool retrieveSolarThresholds(const char *key, SolarThresholds &value);
+
+int analogRead(gpio_num_t pin);
+uint32_t analogRead(adc_channel_t channel);
+void digitalWrite(gpio_num_t pin, int value);
 
 #endif

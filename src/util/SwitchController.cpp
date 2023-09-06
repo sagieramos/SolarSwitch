@@ -2,21 +2,22 @@
 
 #define MINUTES_TO_MILLIS 60000
 
-SwitchController::SwitchController(u_int8_t solarSensorPin,
-                                   u_int8_t relaySignalPin)
-    : _solarSensorPin(solarSensorPin), _relaySignalPin(relaySignalPin),
-      thresholdEepromInstanceAddress(thresholdsEepromAddress +=
-                                     sizeof(SolarThresholds)),
-      intervalMillis(intervalMinutes * MINUTES_TO_MILLIS) {
-  EEPROM.get(thresholdEepromInstanceAddress, threshold);
+const char *swMemStorage[] = {"sw0", "sw1", "sw2", "sw3"};
+static unsigned short nextSwMem = 0;
+SolarIndex solar("SolarRead", ADC1_CHANNEL_0);
 
-  if (isnan(threshold.max) && isnan(threshold.min)) {
+SwitchController::SwitchController(gpio_num_t relaySignalPin)
+    : _relaySignalPin(relaySignalPin),
+      swThresholdAdrress(swMemStorage[nextSwMem]),
+      intervalMillis(intervalMinutes * MINUTES_TO_MILLIS) {
+
+  if (retrieveSolarThresholds(swThresholdAdrress, threshold)) {
     indexMonitor.setThresholds(threshold);
+    nextSwMem++;
   } else {
     SolarThresholds newThreshold;
-
-    EEPROM.put(thresholdEepromInstanceAddress, newThreshold);
-    EEPROM.commit();
+    if (storeSolarThresholds(swThresholdAdrress, newThreshold))
+      nextSwMem++;
   }
 }
 
@@ -32,9 +33,7 @@ bool SwitchController::setInterval(unsigned short durationInMinutes) {
 bool SwitchController::setSolarThresholds(SolarThresholds newThreshold) {
   if (newThreshold.max >= newThreshold.min && newThreshold != threshold) {
     threshold = newThreshold;
-
-    EEPROM.put(thresholdEepromInstanceAddress, threshold);
-    EEPROM.commit();
+    storeSolarThresholds(swThresholdAdrress, threshold);
     indexMonitor.setThresholds(threshold);
     return true;
   }
@@ -50,9 +49,8 @@ bool SwitchController::setSolarThresholds(double max, double min) {
 
   if (threshold != newValue) {
     threshold = newValue;
-    EEPROM.put(thresholdEepromInstanceAddress, threshold);
-    EEPROM.commit();
     indexMonitor.setThresholds(threshold);
+    storeSolarThresholds(swThresholdAdrress, threshold);
   }
 
   return true;
@@ -66,16 +64,17 @@ bool SwitchController::setSolarThresholds(double min) {
 
   if (threshold != newValue) {
     threshold = newValue;
-    EEPROM.put(thresholdEepromInstanceAddress, threshold);
-    EEPROM.commit();
     indexMonitor.setThresholds(threshold);
+    indexMonitor.setThresholds(threshold);
+    storeSolarThresholds(swThresholdAdrress, threshold);
   }
 
   return true;
 }
 
 void SwitchController::run() {
-  double solarIndex = readSolarIndex(_solarSensorPin);
+
+  double solarIndex = solar.read();
   indexMonitor.updateSolarIndex(solarIndex);
 
   unsigned long currentMillis = millis();
@@ -87,18 +86,21 @@ void SwitchController::run() {
     unsigned long rangeDuration = durationAboveMax + durationBelowMin;
     int relaySignal = analogRead(_relaySignalPin);
 
-    if ((rangeDuration > intervalMillis && relaySignal == LOW) ||
-        (rangeDuration <= intervalMillis && relaySignal == HIGH)) {
+    if (rangeDuration > intervalMillis && relaySignal <= PIN_HIGH_THRESHOLD) {
+      digitalWrite(_relaySignalPin, 1);
+    } else if (rangeDuration <= intervalMillis &&
+               relaySignal > PIN_HIGH_THRESHOLD) {
+      digitalWrite(_relaySignalPin, 0);
+    }
+
+    if ((rangeDuration > intervalMillis && relaySignal <= PIN_HIGH_THRESHOLD) ||
+        (rangeDuration <= intervalMillis && relaySignal > PIN_HIGH_THRESHOLD)) {
       digitalWrite(_relaySignalPin, !relaySignal);
     }
 
     previousMillis = currentMillis;
     indexMonitor.resetTimmer();
   }
-}
-
-unsigned short SwitchController::getInstanceCount() {
-  return (thresholdsEepromAddress / sizeof(SolarThresholds));
 }
 
 void SwitchController::debug() { indexMonitor.debugRecordedData(); }
