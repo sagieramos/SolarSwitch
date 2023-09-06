@@ -1,12 +1,14 @@
 #ifndef MAIN_H
 #define MAIN_H
-
-#include <Arduino.h>
-#include <EEPROM.h>
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include <string.h>
 
 #define MAX_VOLTAGE_ADDRESS 0
 #define SOLAR_THRESHOLDS_ADDRESS 8
 #define SOLAR_INDEX_MAX_VALUE 1000.0
+#define SWNAMESPACE "SwStorage"
 
 struct SolarThresholds {
   double max;
@@ -69,5 +71,16 @@ public:
 };
 
 double readSolarIndex(const uint8_t pin);
+int64_t millis();
+
+esp_err_t init_nvs();
+bool storeValue(const char *key, int32_t value);
+bool storeValue(const char *key, const char *value);
+bool storeDouble(const char *key, double value);
+bool retrieveValue(const char *key, char *value, size_t max_len);
+bool retrieveDouble(const char *key, double *value);
+bool retrieveIntValue(const char *key, int32_t *value);
+bool storeSolarThresholds(const char *key, const SolarThresholds &value);
+bool retrieveSolarThresholds(const char *key, SolarThresholds &value);
 
 #endif

@@ -1,8 +1,11 @@
 #include "./util/main.h"
 
-SwitchController controller1(32, 8);
-SwitchController controller1(32, 13);
+extern "C" void app_main() {
+  if (init_nvs() != ESP_OK) {
+    // Handle NVS initialization error
+    return;
+  }
 
-void setup() {}
-
-void loop() { controller1.run(); }
+  while (true) {
+  }
+}
