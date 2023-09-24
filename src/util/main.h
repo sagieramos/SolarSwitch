@@ -2,6 +2,8 @@
 #define MAIN_H
 #include "driver/adc.h"
 #include "driver/gpio.h"
+#include "driver/uart.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <stdio.h>
@@ -27,6 +29,23 @@ struct SolarThresholds {
   bool operator!=(const SolarThresholds &other) const {
     return !(*this == other);
   }
+};
+
+class UartHandler {
+private:
+  uart_port_t uart_num_;
+
+public:
+  UartHandler(uart_port_t uart_num, int baud_rate);
+  ~UartHandler();
+
+  void send(const char *message);
+  void send(float value);
+  void send(double value);
+  void send(int value);
+  void send(unsigned int value);
+  void send(unsigned long value);
+  void sendln();
 };
 
 class SolarIndex {

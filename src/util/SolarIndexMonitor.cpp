@@ -44,15 +44,17 @@ void SolarIndexMonitor::resetTimmer() {
 }
 
 void SolarIndexMonitor::debugRecordedData() {
-  Serial.print("Total Duration above max threshold (ms): ");
-  Serial.print(accumulatedDurationAboveMax);
-  Serial.println(" milliseconds");
-  Serial.print("Max Threshold During Exceed: ");
-  Serial.println(maxThresholdDuringExceed);
-
-  Serial.print("Total Duration below min threshold (ms): ");
-  Serial.print(accumulatedDurationBelowMin);
-  Serial.println(" milliseconds");
-  Serial.print("Min Threshold During Fall: ");
-  Serial.println(minThresholdDuringFall);
+  UartHandler Serial(UART_NUM_0, 115200);
+  Serial.send("Total Duration above max threshold (ms): ");
+  Serial.send(accumulatedDurationAboveMax);
+  Serial.sendln();
+  Serial.send("Max Threshold During Exceed: ");
+  Serial.send(maxThresholdDuringExceed);
+  Serial.sendln();
+  Serial.send("Total Duration below min threshold (ms): ");
+  Serial.send(accumulatedDurationBelowMin);
+  Serial.sendln();
+  Serial.send("Min Threshold During Fall: ");
+  Serial.send(minThresholdDuringFall);
+  Serial.sendln();
 }
