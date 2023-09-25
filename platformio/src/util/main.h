@@ -49,8 +49,8 @@ public:
 
 class SolarIndex {
 private:
-  const adc1_channel_t _pin;
   const char *_key;
+  const adc1_channel_t _pin;
   double R1;
   double R2;
   double highestVolt;
