@@ -13,6 +13,8 @@
 #define SOLAR_INDEX_MAX_VALUE 1000.0
 #define PIN_HIGH_THRESHOLD 2000
 
+UartHandler Serial(UART_NUM_0, 115200);
+
 struct SolarThresholds {
   double max;
   double min;
@@ -29,6 +31,15 @@ struct SolarThresholds {
     return !(*this == other);
   }
 };
+
+/**
+ * @class UartHandler
+ * @brief A utility class for UART communication.
+ *
+ * The UartHandler class provides a simple interface for sending various data
+ * types over UART in ESP-IDF applications. It allows you to send messages as
+ * strings, float, double, int, unsigned int, and unsigned long.
+ */
 
 class UartHandler {
 private:
@@ -47,6 +58,16 @@ public:
   void sendln();
 };
 
+/**
+ * @class SolarIndex
+ * @brief Represents a solar index sensor with voltage reading capabilities.
+ *
+ * The SolarIndex class provides functionality to read the voltage output
+ * of a solar index sensor, calculate the solar index value based on the
+ * voltage readings, and store and retrieve the highest voltage value in
+ * non-volatile storage.
+ */
+
 class SolarIndex {
 private:
   const char *_key;
@@ -64,25 +85,55 @@ public:
   double read();
 };
 
+/**
+ * @class SolarIndexMonitor
+ * @brief Monitors and records solar index data and durations.
+ *
+ * The SolarIndexMonitor class is responsible for monitoring and recording solar
+ * index data, including durations above and below specified thresholds, as well
+ * as the duration within the thresholds. It provides methods to set thresholds,
+ * update the solar index, retrieve accumulated durations, and debug recorded
+ * data.
+ */
+
 class SolarIndexMonitor {
 private:
-  SolarThresholds _threshold;
+  SolarThresholds _currentThreshold;
   double currentSolarIndex = 0;
   unsigned long startMillisAboveMax = 0;
   unsigned long startMillisBelowMin = 0;
+  unsigned long startMillisWithinThresholds = 0;
   double maxThresholdDuringExceed = 0;
   double minThresholdDuringFall = 0;
   unsigned long accumulatedDurationAboveMax = 0;
   unsigned long accumulatedDurationBelowMin = 0;
+  unsigned long accumulatedDurationWithinThresholds = 0;
 
 public:
-  void resetTimmer();
-  void setThresholds(SolarThresholds threshold);
+  void resetTimer();
+  void setThresholds(const SolarThresholds &threshold);
   void updateSolarIndex(double newValue);
   void getAccumulatedDurations(unsigned long &durationAboveMax,
                                unsigned long &durationBelowMin);
+  void getDurationWithinThreshold(unsigned long &durationWithinMax);
   void debugRecordedData();
+
+private:
+  bool isValidThreshold(const SolarThresholds &threshold);
+  void handleThresholdExceed(bool isAboveMax, unsigned long currentMillis);
+  void handleThresholdFall(bool isBelowMin, unsigned long currentMillis);
+  void handleDurationWithinThreshold(bool isWithinThresholds,
+                                     unsigned long currentMillis);
 };
+
+/**
+ * @brief Solar-Powered Switch Controller
+ *
+ * The `SwitchController` class manages a solar-powered switch, monitoring a
+ * solar index sensor and controlling the switch based on predefined thresholds
+ * and time intervals. It provides methods to set thresholds, intervals, run the
+ * controller, and debug recorded data.
+ */
 
 class SwitchController {
 private:
